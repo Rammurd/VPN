@@ -98,13 +98,26 @@ async def process_successful_payment(message: types.Message):
             key_data = response.json()
             print(key_data)
             key_text = key_data.get("accessUrl")
-            if key_text:
-                await bot.send_message(message.from_user.id,
-                                       f"1. Не тупи\n2. Нажми на непонятный текст снизу\n3. Вставь в ключ в приложение\n```{key_text}#VPN_Франция🥖(t.me/ryyad)```\np.s\nПриложение можно скачать по кнопке в меню (🔍 Как подключить)",
-                                       parse_mode=types.ParseMode.MARKDOWN)
-                user_id = message.from_user.id
-                update_purchase_date(user_id)
-                add_access_key(user_id, key_text)
+
+            user_id = message.from_user.id
+            update_purchase_date(user_id)
+            add_access_key(user_id, key_text, "FRANCE")
+
+    #Второй сервер
+    outline_server_data_1 = {
+        "apiUrl":"https://95.181.173.47:53852/m7q9MYv9BxRe6Sdj5fDZgw",
+        "certSha256":"8FCD1D531CD1A0AE6D30A1627FE94968D3370EFF5F435018651C47ADABAB0834"
+    }
+    async with httpx.AsyncClient(verify=False) as client:
+        url = outline_server_data_1["apiUrl"] + "/access-keys/"
+        response = await client.post(url)
+
+        if response.status_code == 201:
+            key_data = response.json()
+            print(key_data)
+            key_text = key_data.get("accessUrl")
+
+            add_access_key(user_id, key_text, "USA")
 
         else:
             await bot.send_message(

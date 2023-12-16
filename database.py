@@ -21,6 +21,7 @@ cursor.execute('''
         key_id INTEGER PRIMARY KEY,
         user_id INTEGER,
         key_text TEXT,
+        server_location TEXT,
         FOREIGN KEY (user_id) REFERENCES users (user_id)
     )
 ''')
@@ -68,14 +69,14 @@ def update_purchase_date(user_id):
     conn.commit()
     conn.close()
 
-def add_access_key(user_id, key_text):
+def add_access_key(user_id, key_text, server_location):
     conn = sqlite3.connect('user_data.db')
     cursor = conn.cursor()
 
     cursor.execute('''
-        INSERT INTO keys (user_id, key_text)
-        VALUES (?, ?)
-    ''', (user_id, key_text))
+        INSERT INTO keys (user_id, key_text, server_location)
+        VALUES (?, ?, ?)
+    ''', (user_id, key_text, server_location))
 
     conn.commit()
     conn.close()
@@ -91,9 +92,10 @@ def get_access_key(user_id):
         WHERE user_id = ?
     ''', (user_id,))
 
-    access_key = cursor.fetchone()
+    access_keys = cursor.fetchall()
 
     conn.close()
 
-    return access_key[0] if access_key else None
+    return [key[0] for key in access_keys] if access_keys else []
+
 
