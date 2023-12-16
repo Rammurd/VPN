@@ -2,8 +2,9 @@ import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.types import ParseMode
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 import httpx
-from database import add_user, update_purchase_date, get_access_key, add_access_key
+from database import add_user, update_purchase_date, get_access_key, add_access_key, get_key_text, get_server_locations
 
 
 # Сюда тыкаю токен от бота
@@ -30,13 +31,35 @@ async def my_keys_command(message: types.Message):
     # Получите user_id из сообщения
     user_id = message.from_user.id
 
-    # Получите ключ пользователя из базы данных
-    access_key = get_access_key(user_id)
+    # Получите все доступные серверные местоположения для данного user_id
+    server_locations = get_server_locations(user_id)
 
-    if access_key:
-        await message.answer(f"Ваш ключ: {access_key}")
+    if server_locations:
+        # Создайте инлайн-клавиатуру с динамическими кнопками на основе server_locations
+        keyboard = InlineKeyboardMarkup()
+        buttons = [InlineKeyboardButton(location, callback_data=f'server_location_{location}') for location in server_locations]
+        keyboard.add(*buttons)
+
+        await message.answer("Выберите серверное местоположение:", reply_markup=keyboard)
     else:
-        await message.answer("Вы еще не приобрели ключ.")
+        await message.answer("У вас нет доступных серверных местоположений.")
+
+@dp.callback_query_handler(lambda query: query.data.startswith('server_location_'))
+async def handle_server_location_choice(callback_query: types.CallbackQuery):
+    # Получите server_location, на который нажали, из callback_data
+    server_location = callback_query.data.replace('server_location_', '')
+
+    # Получите соответствующий key_text для server_location
+    user_id = callback_query.from_user.id
+    key_text = get_key_text(user_id, server_location)
+
+    if key_text:
+        await callback_query.answer()
+        await bot.send_message(callback_query.from_user.id, f"Ключ для сервера {server_location}: {key_text}")
+    else:
+        await callback_query.answer("Ключ не найден.")
+
+
 
 # Кнопка "🔍 Как подключить"
 @dp.message_handler(lambda message: message.text == '🔍 Как подключить')

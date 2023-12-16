@@ -98,4 +98,34 @@ def get_access_key(user_id):
 
     return [key[0] for key in access_keys] if access_keys else []
 
+# Вспомогательная функция для получения key_text для server_location
+def get_key_text(user_id, server_location):
+    conn = sqlite3.connect('user_data.db')
+    cursor = conn.cursor()
 
+    cursor.execute('''
+        SELECT key_text FROM keys
+        WHERE user_id = ? AND server_location = ?
+    ''', (user_id, server_location))
+
+    key_text = cursor.fetchone()
+
+    conn.close()
+
+    return key_text[0] if key_text else None
+
+
+def get_server_locations(user_id):
+    conn = sqlite3.connect('user_data.db')
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT DISTINCT server_location FROM keys
+        WHERE user_id = ?
+    ''', (user_id,))
+
+    server_locations = cursor.fetchall()
+
+    conn.close()
+
+    return [location[0] for location in server_locations] if server_locations else []
