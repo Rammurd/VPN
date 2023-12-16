@@ -1,4 +1,4 @@
-import logging
+import logging ##НУЖНО СДЕЛАТЬ УДАЛЕНИЕ КЛЮЧЕЙ, тут примеры https://github.com/jadolg/outline-vpn-api
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.types import ParseMode
