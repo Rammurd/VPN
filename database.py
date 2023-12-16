@@ -16,8 +16,20 @@ cursor.execute('''
     )
 ''')
 
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS keys (
+        key_id INTEGER PRIMARY KEY,
+        user_id INTEGER,
+        key_text TEXT,
+        FOREIGN KEY (user_id) REFERENCES users (user_id)
+    )
+''')
+
+
 conn.commit()
 conn.close()
+
+
 
 
 def add_user(user_id, username):
@@ -56,18 +68,32 @@ def update_purchase_date(user_id):
     conn.commit()
     conn.close()
 
-
-def get_user_data(user_id):
+def add_access_key(user_id, key_text):
     conn = sqlite3.connect('user_data.db')
     cursor = conn.cursor()
 
     cursor.execute('''
-        SELECT * FROM users
+        INSERT INTO keys (user_id, key_text)
+        VALUES (?, ?)
+    ''', (user_id, key_text))
+
+    conn.commit()
+    conn.close()
+
+
+
+def get_access_key(user_id):
+    conn = sqlite3.connect('user_data.db')
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT key_text FROM keys
         WHERE user_id = ?
     ''', (user_id,))
 
-    user_data = cursor.fetchone()
+    access_key = cursor.fetchone()
 
     conn.close()
 
-    return user_data
+    return access_key[0] if access_key else None
+

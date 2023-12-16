@@ -3,7 +3,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.types import ParseMode
 import httpx
-from database import add_user, update_purchase_date, get_user_data
+from database import add_user, update_purchase_date, get_access_key, add_access_key
 
 
 # Сюда тыкаю токен от бота
@@ -15,7 +15,7 @@ dp.middleware.setup(LoggingMiddleware())
 @dp.message_handler(commands=['start'])
 async def start_command(message: types.Message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["🔍 Как подключить","🍌 Доступ к VPN"]
+    buttons = ["🔍 Как подключить","🍌 Доступ к VPN", "🛠 Мои ключи"]
     keyboard.add(*buttons)
     await message.answer("Выберите один из вариантов:", reply_markup=keyboard)
 
@@ -24,6 +24,19 @@ async def start_command(message: types.Message):
     username = message.from_user.username
     add_user(user_id, username)
 
+
+@dp.message_handler(lambda message: message.text == '🛠 Мои ключи')
+async def my_keys_command(message: types.Message):
+    # Получите user_id из сообщения
+    user_id = message.from_user.id
+
+    # Получите ключ пользователя из базы данных
+    access_key = get_access_key(user_id)
+
+    if access_key:
+        await message.answer(f"Ваш ключ: {access_key}")
+    else:
+        await message.answer("Вы еще не приобрели ключ.")
 
 # Кнопка "🔍 Как подключить"
 @dp.message_handler(lambda message: message.text == '🔍 Как подключить')
@@ -91,6 +104,7 @@ async def process_successful_payment(message: types.Message):
                                        parse_mode=types.ParseMode.MARKDOWN)
                 user_id = message.from_user.id
                 update_purchase_date(user_id)
+                add_access_key(user_id, key_text)
 
         else:
             await bot.send_message(
