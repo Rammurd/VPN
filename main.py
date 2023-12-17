@@ -79,20 +79,49 @@ async def how_to_connect(message: types.Message):
 # Обработка кнопки "🍌 Доступ к VPN" и отправка инвойса
 @dp.message_handler(lambda message: message.text == '🍌 Доступ к VPN')
 async def server_callback(message: types.Message):
-    # Создайте инвойс и отправьте его пользователю
+    # Создаем инлайн-клавиатуру с тремя кнопками тарифов в столбце
+    keyboard = types.InlineKeyboardMarkup(row_width=1)
+    buttons = [
+        types.InlineKeyboardButton("1 месяц (249 рублей)", callback_data="vpn_1_month"),
+        types.InlineKeyboardButton("3 месяца (660 рублей)", callback_data="vpn_3_months"),
+        types.InlineKeyboardButton("6 месяцев (990 рублей)", callback_data="vpn_6_months")
+    ]
+    keyboard.add(*buttons)
+
+    await message.answer("Выберите тариф доступа к VPN:", reply_markup=keyboard)
+
+@dp.callback_query_handler(lambda query: query.data.startswith('vpn_'))
+async def handle_vpn_tariff(callback_query: types.CallbackQuery):
+    # Получите выбранный тариф из callback_data
+    tariff = callback_query.data
+
+    # Определите цену и описание в зависимости от выбранного тарифа
+    if tariff == 'vpn_1_month':
+        price = 24900
+        description = "Доступ к VPN на 1 месяц"
+    elif tariff == 'vpn_3_months':
+        price = 66000
+        description = "Доступ к VPN на 3 месяца"
+    elif tariff == 'vpn_6_months':
+        price = 99000
+        description = "Доступ к VPN на 6 месяцев"
+    else:
+        price = 0
+        description = ""
+
+    # Создайте инвойс с выбранным тарифом
     invoice = types.Invoice(
-        title="YourTitle",
-        description="YourDescription",
-        payload="YourPayload",
+        title="Доступ к VPN",
+        description=description,
+        payload=tariff,
         provider_token="381764678:TEST:73561",
         currency="RUB",
-        prices=[types.LabeledPrice(label="Руб", amount=9900)]
+        prices=[types.LabeledPrice(label="Руб", amount=price)]
     )
 
-    await bot.send_invoice(
-        message.from_user.id,
-        **invoice.to_python()
-    )
+    # Отправьте инвойс пользователю
+    await bot.send_invoice(callback_query.from_user.id, **invoice.to_python())
+
 # Обработка уведомления о PreCheckoutQuery
 @dp.pre_checkout_query_handler(lambda query: True)
 async def process_pre_checkout_query(pre_checkout_query: types.PreCheckoutQuery):
